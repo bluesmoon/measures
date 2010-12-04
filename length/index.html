@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+<head>
+<title>Use your screen to measure common lengths</title>
+<style type="text/css">
+div { position: absolute; padding: 0; margin: 0; white-space: pre; width: 1cm; }
+#rule { left: 0; width: 100%; }
+h2 { position: absolute; position: fixed; color: #ddd; -webkit-transform: rotate(270deg); -webkit-transform-origin: left center; -moz-transform: rotate(270deg); -moz-transform-origin: left center; -o-transform: rotate(270deg); -o-transform-origin: left center; margin: 25em 0 0 -2.8em; text-align: center; width: 20em; }
+u { border-top: solid 1px black; display: block; }
+label { position: absolute; margin: -8px 0 0 -45px; font-size: 7pt; font-family: "Trebuchet MS"; color: #888; background-color: white; padding-right: 7px; text-align: right; width: 4em; }
+
+#rule div { width: 100%; }
+#rule u { border-color: #eee; border-style: dashed none none none;}
+</style>
+</head>
+<body>
+<div id="rule"></div>
+
+<script type="text/javascript">
+(function() {
+/*
+The actual measure is a div with height equal to exactly the measure we want.
+The marker is placed inside this div, flush top with a 1px top border.  We
+do this because the border width adds to the div's size, and if we were to
+put the border directly on the measure div, then its height would be 1unit+1px
+instead of 1unit.  We don't care about the height of the marker div.  It can
+be 1px or 100px.  All that matters is that it is transparent and it has a 1px
+top border.
+
+For the same reason, subticks are not placed inside a tick, but on top of it.
+This allows the marker inside a subtick to occupy the same space as the marker
+of the tick.
+*/
+var index=0;
+function draw_scale(container, o, header, skip_label) {
+	var i, tick, marker, label;
+
+	if(typeof container === "string") {
+		container = document.getElementById(container);
+		if(!container) {
+			var c = document.createElement("div");
+			c.id = container;
+			container = c;
+			container.style.left = "" + (1 + index++*2.5) + "in";
+
+			if(header) {
+				var h = document.createElement("h2");
+				h.innerHTML = header;
+				container.appendChild(h);
+			}
+			document.body.appendChild(container);
+		}
+	}
+
+	if(!o.zero) o.zero = 0;
+	if(!o.multiplier) o.multiplier = 1;
+	if(!o.label) o.label = o.unit;
+	if(o.draw_label) skip_label = false;
+	if(!o.marker_size) o.marker_size = "40px";
+	
+	for(i=0; i<=o.count; i++) {
+		tick = document.createElement('div');
+		tick.style.top = "" + (o.zero + i*o.multiplier) + o.unit;
+		marker = document.createElement('u');
+		marker.style.width = o.marker_size;
+		tick.appendChild(marker);
+		container.appendChild(tick);
+		
+		if(o.subticks && i < o.count)	{
+			if(!o.subticks.unit) o.subticks.unit = o.unit;
+			if(!o.subticks.marker_size) o.subticks.marker_size = parseInt(o.marker_size, 10)*0.5 + o.marker_size.replace(/^\d+/, '');
+			o.subticks.zero = o.zero + i*o.multiplier;
+			draw_scale(container, o.subticks, "", true);
+		}
+		if(!skip_label) {
+			label = document.createElement("label");
+			label.style.top = "" + (o.zero + i*o.multiplier) + o.unit;
+			label.innerHTML = "" + (i*(o.label_multiplier?o.multiplier:1)) + o.label;
+			container.appendChild(label);
+		}
+
+	}
+	
+	container.style.height = "" + (o.count * o.multiplier) + o.unit;
+};
+
+draw_scale("rule", { count: 7, unit: "in", multiplier: 3, marker_size: "100%" }, "", true);
+draw_scale("si", {unit: "cm", count: 53, subticks: { count: 2, multiplier: 0.5, subticks: { count: 5, multiplier: 0.1 } }}, "53cm (1m = 100cm)");
+draw_scale("imp", {unit: "in", count: 21, subticks: { count: 2, multiplier: 0.5, subticks: { count: 2, multiplier: 0.25, subticks: { count: 2, multiplier: 0.125, subticks: {count: 2, multiplier: 0.0625}} } }}, "21 inches (1 foot = 12 inches)");
+draw_scale("cubit", {unit: "cm", count: 7, multiplier: 7.5, label: "palms", subticks: { label: "digits", count: 4, multiplier: 1.875}}, "1 cubit = 7 palms = 28 digits");
+draw_scale("pt", {unit: "pt", count: 75, multiplier: 20, label_multiplier: true, subticks: {count: 2, multiplier: 10, subticks: {count: 5, multiplier: 2}}}, "1500 points");
+draw_scale("px", {unit: "px", count: 100, multiplier: 20, label_multiplier: true, subticks: {count: 2, multiplier: 10, subticks: {count: 5, multiplier: 2}}}, "2000 pixels");
+})();
+</script>
+</body>
+</html>
